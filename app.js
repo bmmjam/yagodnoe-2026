@@ -375,6 +375,7 @@
   // ---------- Global banya counter (abacus.jasoncameron.dev) ----------
   const BANYA_NS = 'yagodnoe-2026-aith';
   const BANYA_KEY = 'banya-honors';
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
   async function fetchBanyaGlobal() {
     try {
       const r = await fetch(`https://abacus.jasoncameron.dev/get/${BANYA_NS}/${BANYA_KEY}`);
@@ -383,13 +384,47 @@
       return typeof j.value === 'number' ? j.value : null;
     } catch { return null; }
   }
-  async function hitBanyaGlobal() {
-    try {
-      const r = await fetch(`https://abacus.jasoncameron.dev/hit/${BANYA_NS}/${BANYA_KEY}`);
-      if (!r.ok) return null;
-      const j = await r.json();
-      return typeof j.value === 'number' ? j.value : null;
-    } catch { return null; }
+  // Serialized hit queue: at most 1 fetch in flight, ≥200ms gap, exponential backoff on 429.
+  let banyaPending = 0;
+  let banyaProcessing = false;
+  let onBanyaServerValue = null; // callback to render authoritative value
+  async function processBanyaQueue() {
+    if (banyaProcessing) return;
+    banyaProcessing = true;
+    let consecutiveFail = 0;
+    while (banyaPending > 0) {
+      banyaPending--;
+      try {
+        const r = await fetch(`https://abacus.jasoncameron.dev/hit/${BANYA_NS}/${BANYA_KEY}`);
+        if (r.status === 429) {
+          banyaPending++; // re-queue
+          let wait = 5000;
+          try {
+            const j = await r.json();
+            const m = (j.error || '').match(/(\d+(?:\.\d+)?)/);
+            if (m) wait = Math.ceil(parseFloat(m[1]) * 1000) + 300;
+          } catch {}
+          await sleep(Math.min(wait, 15000));
+          continue;
+        }
+        if (r.ok) {
+          const j = await r.json();
+          if (typeof j.value === 'number' && onBanyaServerValue) onBanyaServerValue(j.value);
+          consecutiveFail = 0;
+        } else {
+          consecutiveFail++;
+        }
+      } catch {
+        consecutiveFail++;
+      }
+      if (consecutiveFail >= 5) break; // network dead, stop
+      await sleep(220);
+    }
+    banyaProcessing = false;
+  }
+  function enqueueBanyaHit() {
+    banyaPending++;
+    processBanyaQueue();
   }
   function fmtNum(n) { try { return n.toLocaleString('ru-RU'); } catch { return String(n); } }
   function renderTotal(el, n) {
@@ -431,16 +466,22 @@
     const layer = document.getElementById('candleLayer');
     if (!btn || !count || !layer || !total) return;
 
-    fetchBanyaGlobal().then(v => renderTotal(total, v));
+    let localTotal = null;
+    let seenMax = 0;
+    onBanyaServerValue = v => {
+      if (v > seenMax) { seenMax = v; if (localTotal == null || v > localTotal) localTotal = v; renderTotal(total, localTotal); }
+    };
+    fetchBanyaGlobal().then(v => {
+      if (v == null) { renderTotal(total, null); return; }
+      seenMax = v; localTotal = v; renderTotal(total, v);
+    });
 
     btn.addEventListener('click', () => {
       haptic('medium');
       const n = (LS.get(K.bath, 0) || 0) + 1;
       LS.set(K.bath, n);
       count.textContent = 'Ты почтил баню ' + n + ' ' + plural(n, ['раз','раза','раз']);
-      // Optimistic bump on global
-      const m = (total.textContent.match(/[\d\s ]+/) || ['0'])[0].replace(/\D/g, '');
-      if (m) renderTotal(total, parseInt(m, 10) + 1);
+      if (localTotal != null) { localTotal += 1; renderTotal(total, localTotal); }
       // Candle animation
       const c = document.createElement('div');
       c.className = 'candle';
@@ -452,8 +493,8 @@
       c.style.top = (rect.top - layerRect.top) + 'px';
       layer.appendChild(c);
       setTimeout(() => c.remove(), 2300);
-      // Authoritative sync
-      hitBanyaGlobal().then(v => { if (v != null) renderTotal(total, v); });
+      // Serialized sync to global counter
+      enqueueBanyaHit();
     });
   }
 
