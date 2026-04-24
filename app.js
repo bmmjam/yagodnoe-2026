@@ -122,19 +122,29 @@
     const vp = document.getElementById('mapViewport');
     const canvas = document.getElementById('mapCanvas');
     const img = document.getElementById('mapImg');
+    const IMG_RATIO = 1263 / 977;
 
     const apply = () => {
       canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
     };
+    const computeFit = () => {
+      const vpR = vp.getBoundingClientRect();
+      if (vpR.width === 0 || vpR.height === 0) return;
+      let w, h;
+      if (vpR.width / vpR.height > IMG_RATIO) { h = vpR.height; w = h * IMG_RATIO; }
+      else { w = vpR.width; h = w / IMG_RATIO; }
+      state.baseW = w; state.baseH = h;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+    };
     const clampPan = () => {
       const vpR = vp.getBoundingClientRect();
-      const cw = img.clientWidth * state.zoom;
-      const ch = img.clientHeight * state.zoom;
-      const minX = Math.min(0, vpR.width - cw);
-      const minY = Math.min(0, vpR.height - ch);
-      const maxX = 0, maxY = 0;
-      state.panX = Math.max(minX, Math.min(maxX, state.panX));
-      state.panY = Math.max(minY, Math.min(maxY, state.panY));
+      const cw = state.baseW * state.zoom;
+      const ch = state.baseH * state.zoom;
+      if (cw <= vpR.width) state.panX = (vpR.width - cw) / 2;
+      else state.panX = Math.max(vpR.width - cw, Math.min(0, state.panX));
+      if (ch <= vpR.height) state.panY = (vpR.height - ch) / 2;
+      else state.panY = Math.max(vpR.height - ch, Math.min(0, state.panY));
     };
 
     const pointers = new Map();
@@ -216,10 +226,17 @@
       apply();
     }, { passive: false });
 
-    // Initial apply once image is loaded
-    if (img.complete) apply();
-    img.addEventListener('load', apply);
-    window.addEventListener('resize', () => { clampPan(); apply(); });
+    // Initial fit + apply
+    const fitAndApply = () => { computeFit(); clampPan(); apply(); };
+    if (img.complete) fitAndApply();
+    img.addEventListener('load', fitAndApply);
+    window.addEventListener('resize', fitAndApply);
+    // Re-fit when map tab becomes visible (layout might have been 0x0 before)
+    const mapTab = document.querySelector('.tab[data-tab="map"]');
+    if (mapTab) {
+      const obs = new MutationObserver(() => { if (!mapTab.hidden) fitAndApply(); });
+      obs.observe(mapTab, { attributes: true, attributeFilter: ['hidden'] });
+    }
   }
 
   // ---------- Search ----------
