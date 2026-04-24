@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a3a2e">
+  <title>Ягодное 2026</title>
+  <link rel="preload" href="assets/map.jpg" as="image">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main id="app">
+    <!-- Map tab -->
+    <section class="tab tab-map" data-tab="map">
+      <div class="map-controls">
+        <button class="btn-me" id="btnMe">Где я живу</button>
+        <div class="search-wrap">
+          <input class="search" id="search" type="text" placeholder="Найти человека…" autocomplete="off" spellcheck="false">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </div>
+      <div class="map-viewport" id="mapViewport">
+        <div class="map-canvas" id="mapCanvas">
+          <img class="map-img" id="mapImg" src="assets/map.jpg" alt="Карта лагеря" draggable="false">
+          <div class="markers" id="markers"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Schedule tab -->
+    <section class="tab tab-schedule" data-tab="schedule" hidden>
+      <div class="now-banner" id="nowBanner"></div>
+      <div class="schedule" id="schedule"></div>
+    </section>
+  </main>
+
+  <!-- Bottom sheet -->
+  <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+  <div class="sheet" id="sheet" hidden aria-hidden="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+
+  <!-- Name modal -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-label="Кто ты">
+      <h3>Как тебя зовут?</h3>
+      <input class="modal-input" id="nameInput" type="text" placeholder="Начни вводить имя…" autocomplete="off" spellcheck="false">
+      <div class="modal-results" id="nameResults"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="nameCancel">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <nav class="tabbar">
+    <button class="tab-btn" data-go="map">🗺 Карта</button>
+    <button class="tab-btn" data-go="schedule">📅 Расписание</button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>

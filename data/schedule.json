@@ -1,0 +1,28 @@
+{
+  "days": [
+    {
+      "date": "2026-04-25",
+      "title": "25 апреля",
+      "events": [
+        {"time":"10:30","title":"Отъезд","location":"ИТМО, Кронверкский 49","locationId":null},
+        {"time":"13:00","title":"Заселение","location":"УСОЦ Ягодное","locationId":"office"},
+        {"time":"13:30","title":"Знакомство","location":"Возле сцены","locationId":"scene"},
+        {"time":"14:00","title":"Станционка","location":"УСОЦ Ягодное","locationId":"office"},
+        {"time":"15:30","title":"Обед","location":"Столовая","locationId":"dining"},
+        {"time":"16:30","title":"Смешанные активности","location":"УСОЦ Ягодное","locationId":"office"},
+        {"time":"19:30","title":"Ужин","location":"Столовая","locationId":"dining"},
+        {"time":"21:00","title":"Квиз","location":"Столовая","locationId":"dining"}
+      ]
+    },
+    {
+      "date": "2026-04-26",
+      "title": "26 апреля",
+      "events": [
+        {"time":"9:00","title":"Завтрак","location":"Столовая","locationId":"dining"},
+        {"time":"10:30","title":"Сдача белья","location":"УСОЦ Ягодное","locationId":"office"},
+        {"time":"11:00","title":"Сдача домиков","location":"УСОЦ Ягодное","locationId":"office"},
+        {"time":"13:30","title":"Отъезд","location":null,"locationId":null}
+      ]
+    }
+  ]
+}
