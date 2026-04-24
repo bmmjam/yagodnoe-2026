@@ -374,7 +374,7 @@
 
   // ---------- Global banya counter (abacus.jasoncameron.dev) ----------
   const BANYA_NS = 'yagodnoe-2026-aith';
-  const BANYA_KEY = 'banya-honors';
+  const BANYA_KEY = 'banya-honors-live';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   async function fetchBanyaGlobal() {
     try {
